@@ -1,7 +1,9 @@
 import os
 import time
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 
@@ -14,33 +16,46 @@ def normalize_label(sLabel: str) -> str:
     return sLabel
 
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOCAL = os.path.join(REPO_ROOT, "local_models")
+
+small_path = os.path.join(LOCAL, "distilbert-base-uncased-finetuned-sst-2-english")
+medium_path = os.path.join(LOCAL, "textattack__bert-base-uncased-SST-2")
+large_path = os.path.join(LOCAL, "siebert__sentiment-roberta-large-english")
+
+
+def make_local_pipe(model_dir: str, device: str = "mps"):
+    tok = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+    mdl = AutoModelForSequenceClassification.from_pretrained(model_dir, local_files_only=True)
+    return pipeline(
+        "text-classification",
+        model=mdl,
+        tokenizer=tok,
+        top_k=None,
+        device=device,
+        truncation=True,
+    )
+
+
+small = make_local_pipe(small_path, device="mps")
+medium = make_local_pipe(medium_path, device="mps")
+large = make_local_pipe(large_path, device="mps")
+def normalize_label(sLabel: str) -> str:
+    s = sLabel.upper()
+    if s in ["LABEL_1", "POSITIVE"]:
+        return "POSITIVE"
+    if s in ["LABEL_0", "NEGATIVE"]:
+        return "NEGATIVE"
+    return sLabel
+
+
 class EscalationRouter:
-    def __init__(self, tau_small: float = 0.80, tau_med: float = 0.85, device: str = "mps"):
+    def __init__(self, small_pipe, medium_pipe, large_pipe, tau_small: float = 0.80, tau_med: float = 0.85):
         self.tau_small = tau_small
         self.tau_med = tau_med
-
-        self.small = pipeline(
-            "text-classification",
-            model="distilbert-base-uncased-finetuned-sst-2-english",
-            top_k=None,
-            device=device,
-            truncation=True,
-        )
-        self.medium = pipeline(
-            "text-classification",
-            model="textattack/bert-base-uncased-SST-2",
-            top_k=None,
-            device=device,
-            truncation=True,
-        )
-        self.large = pipeline(
-            "text-classification",
-            model="siebert/sentiment-roberta-large-english",
-            top_k=None,
-            device=device,
-            truncation=True,
-        )
-
+        self.small = small_pipe
+        self.medium = medium_pipe
+        self.large = large_pipe
     def _predict_with_conf(self, pipe, text: str) -> dict:
         t0 = time.perf_counter()
         scores = pipe(text)[0]  # list of {label, score}
@@ -95,8 +110,8 @@ class EscalationRouter:
 if __name__ == "__main__":
     print("START routing.py")
 
-    router = EscalationRouter(tau_small=0.95, tau_med=0.95, device="mps")
-    text = "What is 5 times 5"
+    router = EscalationRouter(small, medium, large, tau_small=0.90, tau_med=0.95)    
+    text = "The movie was not bad."
     result = router.route(text)
 
     print("FINAL:", result["final"])

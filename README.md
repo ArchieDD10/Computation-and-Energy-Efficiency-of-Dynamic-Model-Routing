@@ -1,206 +1,282 @@
 # Multi-Model AI Routing Study
 
-This project studies dynamic routing strategies for multi-model AI systems similar in concept to systems such as ChatGPT. The goal is to design and evaluate a routing layer that selects the most appropriate language model for each input based on estimated difficulty and model confidence.
-
-The router chooses among models of different sizes and computational cost in order to:
-
-- minimize compute and latency
-- reduce unnecessary large-model usage
-- maintain task accuracy
-- produce measurable routing behavior
-
-Multiple routing strategies are implemented and compared experimentally.
-
----
-
-## Task Setup
-
-To isolate routing behavior from dataset quirks, the project uses a single fixed task.
-
-Task: Text Classification
-
-Examples include:
-- sentiment classification
-- topic classification
-
-Properties:
-
-- dataset provides class labels (not difficulty labels)
-- difficulty is inferred, not given
-- routing behavior can be studied cleanly
-- results can be logged and visualized consistently
-
----
-
-## Models Compared
-
-Three pretrained transformer models of increasing size are used:
-
-- distilbert-base-uncased
-- bert-base-uncased
-- roberta-large
-
-These serve as small, medium, and large model tiers.
-
----
-
-## Baseline Routing Logic
-
-For each input:
-
-1. Run the small model first
-2. Extract prediction confidence score
-3. If confidence >= threshold → accept output
-4. If confidence < threshold → escalate to medium model
-5. If still below threshold → escalate to large model
-
-This produces:
-
-- explicit routing decisions
-- measurable escalation behavior
-- structured routing logs
-- clean plots and comparison tables
-
----
-
-## Routing Strategies Implemented
-
-### Rule-Based Routing
-- fixed confidence threshold
-- deterministic escalation behavior
-
-### Confidence-Based Routing
-- adaptive thresholds
-- dynamic acceptance criteria
-
-### Classifier-Based Routing
-- separate classifier predicts input difficulty
-- predicted difficulty selects starting model
-
----
-
-## Evaluation Outputs
-
-The system produces:
-
-- routing decision logs
-- model usage frequency
-- escalation rates
-- accuracy comparisons
-- routing performance graphs
-- threshold sensitivity analysis
-
----
-
-## Project Structure
-
-models/
-routing/
-data/
-logs/
-notebooks/
-reports/
-
----
-
-## Environment
-
-Python 3.10+
-PyTorch
-HuggingFace Transformers
-scikit-learn
-pandas
-matplotlib
-
-Install with:
-
-pip install torch transformers datasets scikit-learn pandas matplotlib
-
----
-# COSC 495 — Dynamic Model Routing
+## COSC 495 — Dynamic Model Routing
 Kamran Eisenberg
 
 ---
 
-## Week 1 — Project Initialization (Jan 26 – Jan 31)
+# Project Overview
 
-- Finalized project scope: dynamic routing for multi-model AI systems.
-- Defined research objective: minimize computational cost while preserving classification accuracy.
-- Selected fixed evaluation task: text classification.
-- Identified model hierarchy:
-  - Small: distilbert-base-uncased
-  - Medium: bert-base-uncased
-  - Large: roberta-large
-- Outlined initial routing strategy: confidence-threshold-based escalation.
-- Established semester roadmap and milestone structure.
+This project studies dynamic routing strategies for multi-model AI systems. The goal is to design and evaluate a routing layer that selects the most appropriate model for each input based on confidence signals while minimizing computational cost and preserving classification accuracy.
 
----
+The routing system selects among models of different sizes in order to:
 
-## Week 2 — Literature Review (Feb 1 – Feb 7)
+- Minimize average latency
+- Reduce unnecessary large-model usage
+- Maintain high classification accuracy
+- Produce measurable and reproducible routing behavior
 
-### Papers Reviewed
-
-- RouteLLM (preference-based model routing)
-- WandB LLM Router Guide (practical routing implementation)
-- Model Selection for Latency-Critical Inference (Mendoza et al.)
-- Dynamic Neural Networks Survey
-- BranchyNet (confidence-based early exiting)
-- Harder Task Needs More Experts (MoE routing)
-
-### Key Takeaways
-
-- Confidence scores can act as routing signals.
-- Threshold-based routing is widely used and empirically validated.
-- Harder inputs require more computational resources.
-- Dynamic computation reduces unnecessary processing.
-- Routing decisions directly affect downstream performance.
-
-### Outcome
-
-- Selected Phase 1 Router: confidence-threshold escalation.
-- Defined initial routing design:
-  - Start with small model.
-  - If confidence < threshold → escalate to medium.
-  - If still below threshold → escalate to large.
-- Confirmed feasibility of routing without modifying internal model architectures.
+Evaluation is conducted using a fixed supervised classification task to ensure structured experimental analysis.
 
 ---
 
-## Week 3 — Environment Setup & Model Loading (Feb 8 – Feb 14)
+# Task Setup
 
-### Environment
+## Task: Sentiment Classification
 
-- Created isolated Python virtual environment.
-- Installed required libraries:
-  - torch
-  - transformers
-  - datasets
-  - scikit-learn
-  - pandas
-  - matplotlib
-  - seaborn
+To isolate routing behavior from dataset artifacts, the project uses a single fixed task:
 
-### Project Structure
+- Binary sentiment classification
+- Supervised dataset with ground-truth labels
+- No explicit difficulty labels
+- Difficulty inferred through confidence behavior
 
-- Created organized directory layout:
-  - models/
-  - scripts/
-  - logs/
-  - results/
-  - router/
+## Dataset Used
 
-### Model Initialization
+- GLUE SST-2 (Stanford Sentiment Treebank, binary subset)
+- Validation split: 872 labeled examples
+- Used for controlled routing experiments
 
-- Successfully downloaded and loaded:
-  - distilbert-base-uncased
-  - bert-base-uncased
-  - roberta-large
-- Verified forward pass execution.
-- Implemented confidence extraction using softmax.
-- Confirmed models produce logits and probability outputs.
+SST-2 aligns with the fine-tuned models selected for this study.
 
-### Outcome
+---
 
-- Infrastructure ready for dataset integration and fine-tuning.
-- Confidence scores available for routing logic implementation.
+# Models Compared
 
+Three pretrained, fine-tuned transformer models of increasing size are used:
+
+## Small Model
+- distilbert-base-uncased-finetuned-sst-2-english
+
+## Medium Model
+- textattack/bert-base-uncased-SST-2
+
+## Large Model
+- siebert/sentiment-roberta-large-english
+
+These serve as small, medium, and large model tiers.
+
+All models are:
+
+- Downloaded locally
+- Loaded in offline mode
+- Executed using PyTorch on Apple MPS
+- Evaluated using consistent confidence extraction
+
+---
+
+# Confidence Calculation
+
+For each model:
+
+- Forward pass produces logits
+- Softmax(logits) produces probability distribution
+- Confidence = max(probabilities)
+
+Important note:
+
+Confidence represents internal class preference strength, not guaranteed correctness.
+
+This project empirically evaluates how well confidence correlates with actual correctness.
+
+---
+
+# Baseline Routing Logic (Implemented)
+
+For each input:
+
+- Run small model
+- Extract confidence score
+- If confidence ≥ τ_small → accept prediction
+- Else escalate to medium model
+- If medium confidence ≥ τ_med → accept
+- Else escalate to large model
+
+This produces:
+
+- Explicit routing decisions
+- Measurable escalation rates
+- Structured routing logs
+- Latency measurement per model
+- Number of models invoked per input
+
+---
+
+# Routing Strategies
+
+## Rule-Based Routing (Implemented)
+
+- Fixed confidence thresholds
+- Deterministic escalation
+- Fully evaluated on SST-2 validation set
+
+## Threshold Tuning (Next Phase)
+
+- Sensitivity analysis of τ_small and τ_med
+- Accuracy vs latency tradeoff curves
+
+## Difficulty Classifier Routing (Planned)
+
+- Separate classifier predicts input difficulty
+- Difficulty prediction selects starting model
+
+---
+
+# Evaluation Outputs (Current)
+
+The system produces:
+
+- baseline_results.csv containing:
+  - True label
+  - Final predicted label
+  - Chosen model
+  - Confidence score
+  - Total latency
+  - Number of models used
+
+- Routing decision logs
+- Escalation distribution
+- Accuracy measurement
+- Average latency measurement
+
+This establishes the first complete experimental pipeline.
+
+---
+
+# Project Structure
+
+## scripts/
+- routing.py — Escalation router implementation
+- run_baseline.py — Runs SST-2 evaluation loop
+- analyze_results.py — Computes accuracy and latency metrics
+
+## local_models/
+- distilbert-base-uncased-finetuned-sst-2-english
+- textattack__bert-base-uncased-SST-2
+- siebert__sentiment-roberta-large-english
+
+## results/
+- baseline_results.csv
+
+All models are loaded locally using:
+
+- AutoTokenizer.from_pretrained(local_files_only=True)
+- AutoModelForSequenceClassification.from_pretrained(local_files_only=True)
+
+No external inference calls are made during evaluation.
+
+---
+
+# Week-by-Week Progress
+
+## Week 1 — Project Initialization
+
+- Finalized project scope: dynamic multi-model routing
+- Defined research objective: reduce computational cost while maintaining accuracy
+- Selected classification as controlled task
+- Defined model hierarchy (small → medium → large)
+- Outlined confidence-based escalation strategy
+
+---
+
+## Week 2 — Literature Review
+
+Reviewed:
+
+- RouteLLM
+- BranchyNet
+- Dynamic Neural Networks survey
+- MoE routing strategies
+- Latency-aware model selection
+
+Key takeaways:
+
+- Confidence thresholds are widely used as routing signals
+- Dynamic computation reduces unnecessary processing
+- Routing behavior must be evaluated empirically
+
+---
+
+## Week 3 — Infrastructure and Model Integration
+
+### Environment Setup
+
+- Created Python virtual environment
+- Installed torch, transformers, datasets, pandas, matplotlib
+- Verified Apple MPS acceleration
+
+### Model Loading
+
+- Downloaded all models locally
+- Implemented offline loading
+- Verified logits and probability outputs
+- Implemented softmax-based confidence extraction
+
+### Escalation Router Implementation
+
+- Built EscalationRouter class
+- Implemented:
+  - _predict_with_conf
+  - route
+- Added:
+  - Latency tracking
+  - Label normalization
+  - Decision logging
+- Verified correct escalation behavior through manual tests
+
+---
+
+## Week 4 — Dataset Integration and Baseline Evaluation
+
+### Dataset Preparation
+
+- Integrated GLUE SST-2 dataset
+- Loaded validation split (872 samples)
+- Built structured evaluation loop
+
+### Baseline Experiment
+
+- Ran full routing experiment over validation set
+- Logged:
+  - True label
+  - Final prediction
+  - Chosen model
+  - Confidence
+  - Total latency
+  - Models invoked
+
+### Output
+
+- Generated baseline_results.csv
+- Established first quantitative routing evaluation
+
+This marks the transition from implementation phase to experimental phase.
+
+---
+
+# Current Status
+
+- Models load locally
+- Confidence extracted via softmax
+- Escalation router implemented
+- SST-2 dataset integrated
+- Full baseline experiment executed
+- Results logged for analysis
+
+---
+
+# Next Steps
+
+- Compute baseline accuracy
+- Compare against always-small and always-large baselines
+- Perform threshold sweep
+- Generate:
+  - Accuracy vs latency plots
+  - Large-model usage curves
+  - Confidence distribution analysis
+
+---
+
+# Core Research Question
+
+Can confidence-based dynamic routing achieve near-large-model accuracy while substantially reducing average inference cost in a multi-model classification system?
