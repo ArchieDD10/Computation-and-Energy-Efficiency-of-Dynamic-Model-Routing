@@ -1,0 +1,38 @@
+{
+  "small": {
+    "model": "small",
+    "samples": 872,
+    "avg_latency_ms": 22.683148049918184,
+    "total_latency_ms": 19779.705099528655,
+    "accuracy": 0.9105504587155964,
+    "power_method": "nvidia-smi",
+    "avg_power_watts": 6.1,
+    "total_energy_joules": 121.76622142791747,
+    "total_energy_wh": 0.033823950396643744,
+    "confidence_level": "medium"
+  },
+  "medium": {
+    "model": "medium",
+    "samples": 872,
+    "avg_latency_ms": 46.75883486457895,
+    "total_latency_ms": 40773.70400191285,
+    "accuracy": 0.9243119266055045,
+    "power_method": "nvidia-smi",
+    "avg_power_watts": 5.035,
+    "total_energy_joules": 206.21575088620187,
+    "total_energy_wh": 0.057282153023944966,
+    "confidence_level": "medium"
+  },
+  "large": {
+    "model": "large",
+    "samples": 872,
+    "avg_latency_ms": 162.40569575693203,
+    "total_latency_ms": 141617.76670004474,
+    "accuracy": 0.9243119266055045,
+    "power_method": "nvidia-smi",
+    "avg_power_watts": 5.2,
+    "total_energy_joules": 737.353966999054,
+    "total_energy_wh": 0.20482054638862612,
+    "confidence_level": "medium"
+  }
+}

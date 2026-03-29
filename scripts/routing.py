@@ -1,10 +1,25 @@
 import os
 import time
+import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+
+
+def get_device():
+    """Auto-detect best available device"""
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
+
+
+DEVICE = get_device()
+print(f"Device set to use {DEVICE}")
 
 
 def normalize_label(sLabel: str) -> str:
@@ -24,7 +39,9 @@ medium_path = os.path.join(LOCAL, "textattack__bert-base-uncased-SST-2")
 large_path = os.path.join(LOCAL, "siebert__sentiment-roberta-large-english")
 
 
-def make_local_pipe(model_dir: str, device: str = "mps"):
+def make_local_pipe(model_dir: str, device: str = None):
+    if device is None:
+        device = DEVICE
     tok = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
     mdl = AutoModelForSequenceClassification.from_pretrained(model_dir, local_files_only=True)
     return pipeline(
@@ -37,16 +54,9 @@ def make_local_pipe(model_dir: str, device: str = "mps"):
     )
 
 
-small = make_local_pipe(small_path, device="mps")
-medium = make_local_pipe(medium_path, device="mps")
-large = make_local_pipe(large_path, device="mps")
-def normalize_label(sLabel: str) -> str:
-    s = sLabel.upper()
-    if s in ["LABEL_1", "POSITIVE"]:
-        return "POSITIVE"
-    if s in ["LABEL_0", "NEGATIVE"]:
-        return "NEGATIVE"
-    return sLabel
+small = make_local_pipe(small_path, device=DEVICE)
+medium = make_local_pipe(medium_path, device=DEVICE)
+large = make_local_pipe(large_path, device=DEVICE)
 
 
 class EscalationRouter:
