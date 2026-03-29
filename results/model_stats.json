@@ -1,0 +1,98 @@
+[
+  {
+    "local_path": "/Users/kamraneisenberg/ai-routing-project/local_models/distilbert-base-uncased-finetuned-sst-2-english",
+    "device_used": "mps",
+    "text": "I expected more, but it had some decent moments.",
+    "pred_index": 1,
+    "pred_label_raw": "POSITIVE",
+    "pred_label_normalized": "POSITIVE",
+    "confidence_maxprob": 0.9988706707954407,
+    "entropy": 0.008792266249656677,
+    "margin_top1_top2": 0.9977414011955261,
+    "logits": [
+      -3.3258378505706787,
+      3.4591944217681885
+    ],
+    "probs": [
+      0.0011292943963781,
+      0.9988706707954407
+    ],
+    "avg_latency_ms": 5.550970800000021,
+    "total_params": 66955010,
+    "trainable_params": 66955010,
+    "config": {
+      "num_hidden_layers": 6,
+      "hidden_size": 768,
+      "num_labels": 2,
+      "architectures": [
+        "DistilBertForSequenceClassification"
+      ],
+      "model_type": "distilbert"
+    },
+    "disk_size_mb": 1278.59
+  },
+  {
+    "local_path": "/Users/kamraneisenberg/ai-routing-project/local_models/textattack__bert-base-uncased-SST-2",
+    "device_used": "mps",
+    "text": "I expected more, but it had some decent moments.",
+    "pred_index": 1,
+    "pred_label_raw": "LABEL_1",
+    "pred_label_normalized": "POSITIVE",
+    "confidence_maxprob": 0.99824059009552,
+    "entropy": 0.012917159125208855,
+    "margin_top1_top2": 0.9964812397956848,
+    "logits": [
+      -3.278433322906494,
+      3.0626087188720703
+    ],
+    "probs": [
+      0.001759363804012537,
+      0.99824059009552
+    ],
+    "avg_latency_ms": 12.429558299999988,
+    "total_params": 109483778,
+    "trainable_params": 109483778,
+    "config": {
+      "num_hidden_layers": 12,
+      "hidden_size": 768,
+      "num_labels": 2,
+      "architectures": [
+        "BertForSequenceClassification"
+      ],
+      "model_type": "bert"
+    },
+    "disk_size_mb": 835.57
+  },
+  {
+    "local_path": "/Users/kamraneisenberg/ai-routing-project/local_models/siebert__sentiment-roberta-large-english",
+    "device_used": "mps",
+    "text": "I expected more, but it had some decent moments.",
+    "pred_index": 0,
+    "pred_label_raw": "NEGATIVE",
+    "pred_label_normalized": "NEGATIVE",
+    "confidence_maxprob": 0.9980646967887878,
+    "entropy": 0.014024307951331139,
+    "margin_top1_top2": 0.9961293935775757,
+    "logits": [
+      3.4337892532348633,
+      -2.8117563724517822
+    ],
+    "probs": [
+      0.9980646967887878,
+      0.0019353200914338231
+    ],
+    "avg_latency_ms": 16.654320799999976,
+    "total_params": 355361794,
+    "trainable_params": 355361794,
+    "config": {
+      "num_hidden_layers": 24,
+      "hidden_size": 1024,
+      "num_labels": 2,
+      "architectures": [
+        "RobertaForSequenceClassification"
+      ],
+      "model_type": "roberta"
+    },
+    "disk_size_mb": 4072.68
+  }
+]

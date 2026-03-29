@@ -1,0 +1,147 @@
+LOG:
+First analyze_results:
+(venv) kamraneisenberg@kamrans-air ai-routing-project % python scripts/analyze_results.py
+Accuracy: 0.9128440366972477
+91 percent of the 872 validation samples were classified correctly.
+Now you compare that to:
+
+Small-only accuracy
+
+Large-only accuracy
+
+If:
+
+Small-only = 0.90
+
+Large-only = 0.93
+
+Router = 0.92
+
+Then you say:
+
+The router achieved near-large-model accuracy.
+
+That is a major result.
+
+
+Average latency (ms): 14.492106127293587
+
+COMPARE AGAINST LARGE ONLY LATENCY to  test efficiency
+
+Model usage distribution:
+chosen_model
+small     0.949541
+medium    0.028670
+large     0.021789
+Name: proportion, dtype: float64
+That tells you:
+
+The router avoided using the large model 95% of the time.
+
+That is computational savings.
+
+This is the cost side of the tradeoff.
+
+
+Step 2 — Compare Against Baselines (Critical)
+
+Now you compute:
+
+Always-Small Baseline
+
+Run small model on all 872 samples.
+
+Compute:
+
+Accuracy_small
+
+Avg_latency_small
+
+Always-Large Baseline
+
+Run large model on all 872 samples.
+
+Compute:
+
+Accuracy_large
+
+Avg_latency_large
+
+Step 3 — Build the Tradeoff Table
+
+You want something like:
+
+Model Strategy	Accuracy	Avg Latency	% Large Used
+Small Only	0.90	20ms	0%
+Large Only	0.93	110ms	100%
+Router	0.92	48ms	12%
+
+Now you can argue:
+
+Router retains 99% of large-model accuracy
+
+While using large model only 12% of the time
+
+Cutting latency by more than 50%
+
+That is your experimental conclusion.
+
+Step 4 — What This Means For Your Research
+
+Your proposal question is basically:
+
+Can confidence-based routing approximate large-model accuracy while reducing computational cost?
+
+Your numbers directly answer that.
+
+If routing accuracy is close to large and latency is much lower, then:
+
+Yes, confidence is a viable routing signal.
+
+If routing accuracy collapses, then:
+
+Confidence is not a good difficulty estimator.
+
+Either way, it’s a real empirical result.
+
+Step 5 — Next Smart Move
+
+Now you vary thresholds.
+
+Change:
+
+τ_small
+
+τ_med
+
+Observe how:
+
+Accuracy changes
+
+% large usage changes
+
+Latency changes
+
+That gives you:
+
+Accuracy vs Cost curves.
+
+That’s publishable-style analysis.
+
+Big Picture
+
+Those numbers are not just “stats.”
+
+They are your:
+
+Experimental validation
+
+Research contribution
+
+Core findings section
+
+Graph material
+
+Final presentation material
+
+This is the part professors care about.
