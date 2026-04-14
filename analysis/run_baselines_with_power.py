@@ -69,7 +69,7 @@ def main():
 
     # Load dataset
     print("\nLoading SST-2 validation dataset...")
-    dataset = load_dataset("glue", "sst2", split="train").shuffle(seed=42).select(range(1000))
+    dataset = load_dataset("glue", "sst2", split="validation")
     print(f"Loaded {len(dataset)} examples")
 
     all_power_stats = {}

@@ -2,7 +2,7 @@ from datasets import load_dataset
 from routing import EscalationRouter, small, medium, large
 import pandas as pd
 
-dataset = load_dataset("glue", "sst2", split="train").shuffle(seed=42).select(range(500))
+dataset = load_dataset("glue", "sst2", split="validation")
 
 router = EscalationRouter(small, medium, large, tau_small=0.80, tau_med=0.85)
 

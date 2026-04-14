@@ -20,7 +20,7 @@ def load_calibration_data(n_samples: int = 200):
     """Load subset of SST-2 for temperature calibration"""
     print(f"[INFO] Loading {n_samples} samples for calibration...")
 
-    dataset = load_dataset("sst2", split="train").shuffle(seed=42).select(range(1000))
+    dataset = load_dataset("sst2", split="validation")
 
     # Take a subset for calibration (separate from main evaluation)
     calibration_indices = np.random.choice(len(dataset), n_samples, replace=False)

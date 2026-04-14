@@ -26,7 +26,7 @@ def run_calibrated_baseline_analysis():
 
     # Load dataset
     print("[INFO] Loading SST-2 validation dataset...")
-    dataset = load_dataset("sst2", split="train").shuffle(seed=42).select(range(1000))
+    dataset = load_dataset("sst2", split="validation")
 
     # Load calibration results
     with open('results/temperature_calibration.json', 'r') as f:
@@ -61,9 +61,10 @@ def run_calibrated_baseline_analysis():
 
     start_time = time.time()
 
+    total_samples = len(dataset)
     for i, example in enumerate(dataset):
         if i % 100 == 0:
-            print(f"  Progress: {i}/872 samples")
+            print(f"  Progress: {i}/{total_samples} samples")
 
         text = example["sentence"]
         true_label = example["label"]
@@ -197,9 +198,10 @@ def compare_original_vs_calibrated():
     print(f"\nMODEL USAGE COMPARISON:")
     print(f"  Model      Original    Calibrated   Change")
     print(f"  -------    --------    ----------   ------")
+    total_samples = len(original_df)
     for model in ['small', 'medium', 'large']:
-        orig_pct = original_usage[model] / 872 * 100
-        cal_pct = calibrated_usage.get(model, 0) / 872 * 100
+        orig_pct = original_usage[model] / total_samples * 100
+        cal_pct = calibrated_usage.get(model, 0) / total_samples * 100
         change = cal_pct - orig_pct
         print(f"  {model:8}   {orig_pct:6.1f}%      {cal_pct:6.1f}%      {change:+5.1f}%")
 
