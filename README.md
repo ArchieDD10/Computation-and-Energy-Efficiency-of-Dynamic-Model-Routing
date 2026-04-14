@@ -254,17 +254,91 @@ This marks the transition from implementation phase to experimental phase.
 
 ---
 
-# Current Status
+## Week 5 — Small Model Evaluation
 
-- Models load locally
-- Confidence extracted via softmax
-- Escalation router implemented
-- SST-2 dataset integrated
-- Full baseline experiment executed
-- Results logged for analysis
+- Implemented script to run the small model on the SST-2 validation dataset
+- Generated predictions for all 872 samples
+- Stored results in results/small_results.csv
+- Computed baseline accuracy for the small model
+- Verified correct label mapping and prediction formatting
 
 ---
 
+## Week 6 — Medium Model Evaluation
+
+- Implemented script to run the medium model on the SST-2 validation dataset
+- Identified label format differences (LABEL_0 / LABEL_1 vs POSITIVE / NEGATIVE)
+- Fixed label normalization bug that caused incorrect accuracy calculation
+- Generated results/medium_results.csv
+- Computed medium model accuracy and verified correct predictions
+
+---
+
+## Week 7 — Large Model Evaluation and Comparison
+
+- Implemented script to run the large model on the SST-2 validation dataset
+- Generated results/large_results.csv
+- Computed large model accuracy
+- Built comparison script to evaluate:
+  - Small model accuracy
+  - Medium model accuracy
+  - Large model accuracy
+  - Router accuracy
+- Collected routing usage statistics:
+  - Percentage of inputs handled by small, medium, and large models
+- Constructed comparison tables for analysis
+- Began interpreting tradeoffs between model size and accuracy
+
+---
+
+# Current Status
+
+- Models successfully load and run locally
+- Confidence scores extracted using softmax
+- Escalation routing system fully implemented
+- SST-2 dataset integrated for evaluation
+- Small, medium, and large model baselines executed
+- Full routing experiment completed on validation set
+- Accuracy results computed for all models
+- Routing usage distribution collected and analyzed
+- Results prepared for comparison and reporting
+- Baseline comparison across all model tiers completed
+
+---
+
+# Experimental Results (Baseline Evaluation)
+
+## Accuracy Comparison
+
+The following accuracies were obtained on the SST-2 validation set:
+
+- Small Model: 90.37%
+- Medium Model: 91.86%
+- Large Model: 92.09%
+- Router: 91.28%
+
+## Router Model Usage
+
+The routing system selected models with the following distribution:
+
+- Small: 94.95%
+- Medium: 2.87%
+- Large: 2.18%
+
+## Key Observations
+
+- The router outperformed the small model baseline while remaining close to the medium model and slightly below the large model.
+- The routing system relied heavily on the small model, using it for approximately 95% of inputs.
+- The large model was used in only ~2% of cases, yet the router maintained accuracy within ~0.8% of the large model.
+- This indicates that most inputs in the dataset can be correctly handled by smaller models, and that confidence-based routing can effectively identify when escalation is necessary.
+
+## Interpretation
+
+The results demonstrate that confidence-threshold-based routing can approximate high-accuracy performance while significantly reducing reliance on larger models. Although the router did not surpass the medium or large baselines, it achieved a strong balance between performance and efficiency.
+
+These results align with the project objective of selecting the smallest effective model for each input while maintaining overall accuracy.
+
+---
 # Next Steps
 
 - Compute baseline accuracy
@@ -275,6 +349,12 @@ This marks the transition from implementation phase to experimental phase.
   - Large-model usage curves
   - Confidence distribution analysis
 
+---
+## Future Work
+
+- Tune confidence thresholds (τ_small, τ_med)
+- Improve routing accuracy to match or exceed large model
+- Explore classifier-based routing
 ---
 
 # Core Research Question
