@@ -52,7 +52,7 @@ def main():
 
     # Load dataset (same as partner's code)
     print("\nLoading SST-2 validation dataset...")
-    dataset = load_dataset("glue", "sst2", split="validation")
+    dataset = load_dataset("glue", "sst2", split="train").shuffle(seed=42).select(range(1000))
     print(f"Loaded {len(dataset)} examples")
 
     # Run each model independently

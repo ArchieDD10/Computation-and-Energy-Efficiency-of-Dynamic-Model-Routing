@@ -1,0 +1,35 @@
+{
+  "small": {
+    "initial_temperature": 1.5,
+    "final_temperature": 1.498939037322998,
+    "original_accuracy": 0.9200000166893005,
+    "scaled_accuracy": 0.9200000166893005,
+    "original_avg_confidence": 0.979139506816864,
+    "scaled_avg_confidence": 0.9638670086860657,
+    "original_brier_score": 0.08030724569032596,
+    "scaled_brier_score": 0.07741469562082447,
+    "calibration_improvement": 0.0028925500695014955
+  },
+  "medium": {
+    "initial_temperature": 1.5,
+    "final_temperature": 1.499341368675232,
+    "original_accuracy": 0.9066666960716248,
+    "scaled_accuracy": 0.9066666960716248,
+    "original_avg_confidence": 0.9821099638938904,
+    "scaled_avg_confidence": 0.9594283103942871,
+    "original_brier_score": 0.08195341227516796,
+    "scaled_brier_score": 0.07375157469922945,
+    "calibration_improvement": 0.008201837575938509
+  },
+  "large": {
+    "initial_temperature": 1.5,
+    "final_temperature": 1.4988199472427368,
+    "original_accuracy": 0.9399999976158142,
+    "scaled_accuracy": 0.9399999976158142,
+    "original_avg_confidence": 0.9981391429901123,
+    "scaled_avg_confidence": 0.9871883392333984,
+    "original_brier_score": 0.05906095304728706,
+    "scaled_brier_score": 0.056495907125712834,
+    "calibration_improvement": 0.0025650459215742286
+  }
+}

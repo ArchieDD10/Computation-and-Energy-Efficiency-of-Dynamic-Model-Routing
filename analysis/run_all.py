@@ -24,7 +24,7 @@ def run_command(cmd, description):
         print(f"[ERROR] Running: {cmd}")
         print(f"Error message: {e.stderr}")
         return False
-
+    
 
 def main():
     print("=" * 70)

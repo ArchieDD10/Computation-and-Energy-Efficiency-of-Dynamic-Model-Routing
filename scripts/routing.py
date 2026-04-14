@@ -51,6 +51,7 @@ def make_local_pipe(model_dir: str, device: str = None):
         top_k=None,
         device=device,
         truncation=True,
+        max_length = 128
     )
 
 
