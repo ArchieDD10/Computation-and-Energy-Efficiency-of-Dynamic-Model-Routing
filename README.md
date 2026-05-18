@@ -5,358 +5,198 @@ Kamran Eisenberg
 
 ---
 
-# Project Overview
+# Project Summary
 
-This project studies dynamic routing strategies for multi-model AI systems. The goal is to design and evaluate a routing layer that selects the most appropriate model for each input based on confidence signals while minimizing computational cost and preserving classification accuracy.
+This project implements and evaluates a confidence-based routing system for multi-model AI classification. The router selects among three sentiment-classification models of increasing size and escalates inputs only when the current model is not confident enough in its prediction.
 
-The routing system selects among models of different sizes in order to:
+The finished project focuses on a single controlled task:
 
-- Minimize average latency
-- Reduce unnecessary large-model usage
-- Maintain high classification accuracy
-- Produce measurable and reproducible routing behavior
+- binary sentiment classification
+- GLUE SST-2 validation split
+- 872 labeled evaluation examples
+- offline local inference using pretrained transformer models
 
-Evaluation is conducted using a fixed supervised classification task to ensure structured experimental analysis.
-
----
-
-# Task Setup
-
-## Task: Sentiment Classification
-
-To isolate routing behavior from dataset artifacts, the project uses a single fixed task:
-
-- Binary sentiment classification
-- Supervised dataset with ground-truth labels
-- No explicit difficulty labels
-- Difficulty inferred through confidence behavior
-
-## Dataset Used
-
-- GLUE SST-2 (Stanford Sentiment Treebank, binary subset)
-- Validation split: 872 labeled examples
-- Used for controlled routing experiments
-
-SST-2 aligns with the fine-tuned models selected for this study.
+The main goal is to test whether a simple routing policy can reduce reliance on stronger models while preserving useful predictive performance.
 
 ---
 
-# Models Compared
+# Final System
 
-Three pretrained, fine-tuned transformer models of increasing size are used:
+## Models
 
-## Small Model
-- distilbert-base-uncased-finetuned-sst-2-english
+The project uses three fine-tuned transformer classifiers:
 
-## Medium Model
-- textattack/bert-base-uncased-SST-2
+- Small: `distilbert-base-uncased-finetuned-sst-2-english`
+- Medium: `textattack/bert-base-uncased-SST-2`
+- Large: `siebert/sentiment-roberta-large-english`
 
-## Large Model
-- siebert/sentiment-roberta-large-english
+These models are stored locally under `local_models/` and loaded with `local_files_only=True`. No external inference APIs are used during evaluation.
 
-These serve as small, medium, and large model tiers.
-
-All models are:
-
-- Downloaded locally
-- Loaded in offline mode
-- Executed using PyTorch on Apple MPS
-- Evaluated using consistent confidence extraction
-
----
-
-# Confidence Calculation
+## Confidence Signal
 
 For each model:
 
-- Forward pass produces logits
-- Softmax(logits) produces probability distribution
-- Confidence = max(probabilities)
+- a forward pass produces logits
+- logits are converted to class probabilities with softmax
+- confidence is defined as `max(probabilities)`
 
-Important note:
+In this project, confidence is used as the routing signal. A higher confidence score means the model more strongly prefers one label over the other, but high confidence does not guarantee correctness.
 
-Confidence represents internal class preference strength, not guaranteed correctness.
+## Routing Logic
 
-This project empirically evaluates how well confidence correlates with actual correctness.
+The implemented router follows a fixed escalation policy:
 
----
+1. Run the small model first.
+2. If `confidence >= τ_small`, accept the prediction.
+3. Otherwise run the medium model.
+4. If `confidence >= τ_med`, accept the prediction.
+5. Otherwise escalate to the large model.
 
-# Baseline Routing Logic (Implemented)
+The baseline evaluation currently stored in `results/baseline_results.csv` was generated with:
 
-For each input:
+- `τ_small = 0.75`
+- `τ_med = 0.80`
 
-- Run small model
-- Extract confidence score
-- If confidence ≥ τ_small → accept prediction
-- Else escalate to medium model
-- If medium confidence ≥ τ_med → accept
-- Else escalate to large model
+The router records:
 
-This produces:
-
-- Explicit routing decisions
-- Measurable escalation rates
-- Structured routing logs
-- Latency measurement per model
-- Number of models invoked per input
+- final predicted label
+- chosen model tier
+- confidence score
+- number of models invoked
+- total latency per example
 
 ---
 
-# Routing Strategies
+# Results
 
-## Rule-Based Routing (Implemented)
+## Baseline Router Results
 
-- Fixed confidence thresholds
-- Deterministic escalation
-- Fully evaluated on SST-2 validation set
+Using the saved baseline output in `results/baseline_results.csv`:
 
-## Threshold Tuning (Next Phase)
+- Samples evaluated: `872`
+- Accuracy: `90.37%`
+- Average latency: `12.89 ms`
+- Average models used per input: `1.024`
 
-- Sensitivity analysis of τ_small and τ_med
-- Accuracy vs latency tradeoff curves
+Model usage distribution:
 
-## Difficulty Classifier Routing (Planned)
+- Small: `853 / 872` (`97.82%`)
+- Medium: `17 / 872` (`1.95%`)
+- Large: `2 / 872` (`0.23%`)
 
-- Separate classifier predicts input difficulty
-- Difficulty prediction selects starting model
+Confidence summary:
 
----
+- Average confidence on correct predictions: `0.992839`
+- Average confidence on incorrect predictions: `0.951277`
 
-# Evaluation Outputs (Current)
+These results show that the current low-threshold baseline behaves very similarly to the small model, with escalation occurring only rarely.
 
-The system produces:
+## Additional Output Files
 
-- baseline_results.csv containing:
-  - True label
-  - Final predicted label
-  - Chosen model
-  - Confidence score
-  - Total latency
-  - Number of models used
+The repository also includes single-model outputs for direct comparison:
 
-- Routing decision logs
-- Escalation distribution
-- Accuracy measurement
-- Average latency measurement
+- `results/small_results.csv`
+- `results/medium_results.csv`
+- `results/large_results.csv`
 
-This establishes the first complete experimental pipeline.
+Model metadata and one-sample inspection output are stored in:
+
+- `results/model_stats.json`
 
 ---
 
-# Project Structure
+# Repository Structure
 
-## scripts/
-- routing.py — Escalation router implementation
-- run_baseline.py — Runs SST-2 evaluation loop
-- analyze_results.py — Computes accuracy and latency metrics
+## Key Scripts
 
-## local_models/
-- distilbert-base-uncased-finetuned-sst-2-english
-- textattack__bert-base-uncased-SST-2
-- siebert__sentiment-roberta-large-english
+- `scripts/routing.py`  
+  Implements the `EscalationRouter` and local model-loading pipeline.
 
-## results/
-- baseline_results.csv
+- `scripts/run_baseline.py`  
+  Runs the router over the SST-2 validation split and writes `results/baseline_results.csv`.
 
-All models are loaded locally using:
+- `scripts/run_small.py`  
+  Runs the small model alone over SST-2 and writes `results/small_results.csv`.
 
-- AutoTokenizer.from_pretrained(local_files_only=True)
-- AutoModelForSequenceClassification.from_pretrained(local_files_only=True)
+- `scripts/run_medium.py`  
+  Runs the medium model alone over SST-2 and writes `results/medium_results.csv`.
 
-No external inference calls are made during evaluation.
+- `scripts/run_large.py`  
+  Runs the large model alone over SST-2 and writes `results/large_results.csv`.
 
----
+- `scripts/analyze_results.py`  
+  Computes overall router accuracy, average latency, and model-usage distribution from `baseline_results.csv`.
 
-# Week-by-Week Progress
+- `scripts/model_stats.py`  
+  Collects model-level metadata such as parameter counts, disk size, confidence statistics, and average latency on a sample input.
 
-## Week 1 — Project Initialization
+## Main Data/Output Directories
 
-- Finalized project scope: dynamic multi-model routing
-- Defined research objective: reduce computational cost while maintaining accuracy
-- Selected classification as controlled task
-- Defined model hierarchy (small → medium → large)
-- Outlined confidence-based escalation strategy
+- `local_models/`  
+  Local copies of all three pretrained sentiment models.
 
----
+- `results/`  
+  CSV outputs and model summary files generated by evaluation scripts.
 
-## Week 2 — Literature Review
-
-Reviewed:
-
-- RouteLLM
-- BranchyNet
-- Dynamic Neural Networks survey
-- MoE routing strategies
-- Latency-aware model selection
-
-Key takeaways:
-
-- Confidence thresholds are widely used as routing signals
-- Dynamic computation reduces unnecessary processing
-- Routing behavior must be evaluated empirically
+- `reports/`  
+  Project writing and literature notes.
 
 ---
 
-## Week 3 — Infrastructure and Model Integration
+# What Was Completed
 
-### Environment Setup
+Finished in this repository:
 
-- Created Python virtual environment
-- Installed torch, transformers, datasets, pandas, matplotlib
-- Verified Apple MPS acceleration
+- local offline loading of all three models
+- confidence extraction from softmax outputs
+- deterministic escalation router implementation
+- SST-2 validation-set integration
+- full router evaluation pipeline
+- single-model baseline generation
+- saved CSV outputs for downstream analysis
 
-### Model Loading
+Not implemented as a finished feature:
 
-- Downloaded all models locally
-- Implemented offline loading
-- Verified logits and probability outputs
-- Implemented softmax-based confidence extraction
-
-### Escalation Router Implementation
-
-- Built EscalationRouter class
-- Implemented:
-  - _predict_with_conf
-  - route
-- Added:
-  - Latency tracking
-  - Label normalization
-  - Decision logging
-- Verified correct escalation behavior through manual tests
+- learned difficulty-classifier routing
+- automatic threshold optimization
+- a broader multi-task evaluation beyond SST-2
 
 ---
 
-## Week 4 — Dataset Integration and Baseline Evaluation
+# Research Takeaways
 
-### Dataset Preparation
+The project supports several practical conclusions:
 
-- Integrated GLUE SST-2 dataset
-- Loaded validation split (872 samples)
-- Built structured evaluation loop
+- confidence can be used as a simple routing signal in a multi-model classification pipeline
+- lower thresholds sharply reduce escalation frequency
+- high confidence is not a reliable guarantee of correctness
+- threshold choice strongly affects whether the router behaves adaptively or simply defaults to the smallest model
 
-### Baseline Experiment
-
-- Ran full routing experiment over validation set
-- Logged:
-  - True label
-  - Final prediction
-  - Chosen model
-  - Confidence
-  - Total latency
-  - Models invoked
-
-### Output
-
-- Generated baseline_results.csv
-- Established first quantitative routing evaluation
-
-This marks the transition from implementation phase to experimental phase.
+In its current saved baseline configuration, the router prioritizes minimal escalation and therefore stays very close to a small-model-only system. The project infrastructure is complete enough to support additional threshold sweeps or more advanced routing strategies in future work.
 
 ---
 
-## Week 5 — Small Model Evaluation
+# How to Reproduce
 
-- Implemented script to run the small model on the SST-2 validation dataset
-- Generated predictions for all 872 samples
-- Stored results in results/small_results.csv
-- Computed baseline accuracy for the small model
-- Verified correct label mapping and prediction formatting
+From the project root:
 
----
+```bash
+python3 scripts/run_baseline.py
+python3 scripts/run_small.py
+python3 scripts/run_medium.py
+python3 scripts/run_large.py
+python3 scripts/analyze_results.py
+python3 scripts/model_stats.py
+```
 
-## Week 6 — Medium Model Evaluation
+These scripts assume:
 
-- Implemented script to run the medium model on the SST-2 validation dataset
-- Identified label format differences (LABEL_0 / LABEL_1 vs POSITIVE / NEGATIVE)
-- Fixed label normalization bug that caused incorrect accuracy calculation
-- Generated results/medium_results.csv
-- Computed medium model accuracy and verified correct predictions
+- required Python packages are installed
+- local model folders already exist in `local_models/`
+- the environment supports the configured execution device in `scripts/routing.py`
 
----
-
-## Week 7 — Large Model Evaluation and Comparison
-
-- Implemented script to run the large model on the SST-2 validation dataset
-- Generated results/large_results.csv
-- Computed large model accuracy
-- Built comparison script to evaluate:
-  - Small model accuracy
-  - Medium model accuracy
-  - Large model accuracy
-  - Router accuracy
-- Collected routing usage statistics:
-  - Percentage of inputs handled by small, medium, and large models
-- Constructed comparison tables for analysis
-- Began interpreting tradeoffs between model size and accuracy
-
----
-
-# Current Status
-
-- Models successfully load and run locally
-- Confidence scores extracted using softmax
-- Escalation routing system fully implemented
-- SST-2 dataset integrated for evaluation
-- Small, medium, and large model baselines executed
-- Full routing experiment completed on validation set
-- Accuracy results computed for all models
-- Routing usage distribution collected and analyzed
-- Results prepared for comparison and reporting
-- Baseline comparison across all model tiers completed
-
----
-
-# Experimental Results (Baseline Evaluation)
-
-## Accuracy Comparison
-
-The following accuracies were obtained on the SST-2 validation set:
-
-- Small Model: 90.37%
-- Medium Model: 91.86%
-- Large Model: 92.09%
-- Router: 91.28%
-
-## Router Model Usage
-
-The routing system selected models with the following distribution:
-
-- Small: 94.95%
-- Medium: 2.87%
-- Large: 2.18%
-
-## Key Observations
-
-- The router outperformed the small model baseline while remaining close to the medium model and slightly below the large model.
-- The routing system relied heavily on the small model, using it for approximately 95% of inputs.
-- The large model was used in only ~2% of cases, yet the router maintained accuracy within ~0.8% of the large model.
-- This indicates that most inputs in the dataset can be correctly handled by smaller models, and that confidence-based routing can effectively identify when escalation is necessary.
-
-## Interpretation
-
-The results demonstrate that confidence-threshold-based routing can approximate high-accuracy performance while significantly reducing reliance on larger models. Although the router did not surpass the medium or large baselines, it achieved a strong balance between performance and efficiency.
-
-These results align with the project objective of selecting the smallest effective model for each input while maintaining overall accuracy.
-
----
-# Next Steps
-
-- Compute baseline accuracy
-- Compare against always-small and always-large baselines
-- Perform threshold sweep
-- Generate:
-  - Accuracy vs latency plots
-  - Large-model usage curves
-  - Confidence distribution analysis
-
----
-## Future Work
-
-- Tune confidence thresholds (τ_small, τ_med)
-- Improve routing accuracy to match or exceed large model
-- Explore classifier-based routing
 ---
 
 # Core Research Question
 
-Can confidence-based dynamic routing achieve near-large-model accuracy while substantially reducing average inference cost in a multi-model classification system?
+Can a confidence-based dynamic router preserve useful sentiment-classification performance while limiting unnecessary escalation to stronger models in a local multi-model inference pipeline?
